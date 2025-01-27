@@ -6,47 +6,54 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// RabbitMQ is an interface for interacting with RabbitMQ.
+// It provides methods to publish messages, consume messages, declare queues, and manage connections.
 type RabbitMQ interface {
+	// PublishMessage publishes a message to a queue or an exchange.
 	PublishMessage(queueName, exchangeName string, message []byte) error
+
+	// ConsumeMessages starts consuming messages from a queue and invokes the provided handler function for each message.
 	ConsumeMessages(queueName string, handler func([]byte)) error
+
+	// DeclareQueue declares a RabbitMQ queue with the provided configuration.
 	DeclareQueue(queueName string, durable, autoDelete, exclusive, noWait bool, args amqp.Table) error
+
+	// Close closes the RabbitMQ connection and channel.
 	Close() error
 }
 
-
+// rabbitmq is the concrete implementation of the RabbitMQ interface.
+// It maintains the connection and channel to RabbitMQ.
 type rabbitmq struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
-	// triggerFunctions map[string]func([]byte)
+	conn    *amqp.Connection // Connection to RabbitMQ.
+	channel *amqp.Channel    // Channel for communication with RabbitMQ.
 }
 
-type TriggerFunction struct {
-	QueueName    string
-	ExchangeName string
-	// TriggerFunc  func(message []byte)
-}
-
-// func NewRabbitMQ(url string, triggerFunctions ...TriggerFunction) (RabbitMQ, error) {
+// NewRabbitMQ establishes a connection to RabbitMQ and returns a RabbitMQ instance.
+// Parameters:
+// - url: RabbitMQ connection string.
+// Returns:
+// - RabbitMQ: An instance of the RabbitMQ interface.
+// - error: Error, if any, during connection or channel creation.
 func NewRabbitMQ(url string) (RabbitMQ, error) {
 	conn, ch, err := connectToRabbitMQ(url)
 	if err != nil {
 		return nil, err
 	}
 
-	// triggerFunctionsMap := map[string]func([]byte){}
-
-	// for _, triggerFunction := range triggerFunctions {
-	// 	key := triggerFunction.QueueName + triggerFunction.ExchangeName
-	// 	triggerFunctionsMap[key] = triggerFunction.TriggerFunc
-	// }
-
 	return &rabbitmq{
 		conn:    conn,
 		channel: ch,
-		// triggerFunctions: triggerFunctionsMap,
 	}, nil
 }
 
+// connectToRabbitMQ establishes a connection and channel to RabbitMQ.
+// Parameters:
+// - url: RabbitMQ connection string.
+// Returns:
+// - *amqp.Connection: RabbitMQ connection.
+// - *amqp.Channel: RabbitMQ channel.
+// - error: Error, if any, during connection or channel creation.
 func connectToRabbitMQ(url string) (*amqp.Connection, *amqp.Channel, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
@@ -62,11 +69,21 @@ func connectToRabbitMQ(url string) (*amqp.Connection, *amqp.Channel, error) {
 	return conn, ch, nil
 }
 
+// DeclareQueue declares a RabbitMQ queue with the specified configuration.
+// Parameters:
+// - queueName: Name of the queue.
+// - durable: Whether the queue should survive a RabbitMQ restart.
+// - autoDelete: Whether the queue should be deleted when no consumers are connected.
+// - exclusive: Whether the queue should be used exclusively by one connection.
+// - noWait: Whether the server should wait for a confirmation.
+// - args: Additional arguments for the queue.
+// Returns:
+// - error: Error, if any, during the queue declaration.
 func (r *rabbitmq) DeclareQueue(queueName string, durable, autoDelete, exclusive, noWait bool, args amqp.Table) error {
 	_, err := r.channel.QueueDeclare(
 		queueName,  // name
 		durable,    // durable
-		autoDelete, // delete when unused
+		autoDelete, // auto-delete
 		exclusive,  // exclusive
 		noWait,     // no-wait
 		args,       // arguments
@@ -79,6 +96,13 @@ func (r *rabbitmq) DeclareQueue(queueName string, durable, autoDelete, exclusive
 	return nil
 }
 
+// PublishMessage publishes a message to a specific queue or exchange.
+// Parameters:
+// - queueName: Name of the queue to publish to.
+// - exchangeName: Name of the exchange to publish to (use empty string for direct queue publishing).
+// - message: Message to be published, in byte format.
+// Returns:
+// - error: Error, if any, during message publishing.
 func (r *rabbitmq) PublishMessage(queueName, exchangeName string, message []byte) error {
 	err := r.channel.Publish(
 		exchangeName, // exchange
@@ -86,8 +110,8 @@ func (r *rabbitmq) PublishMessage(queueName, exchangeName string, message []byte
 		false,        // mandatory
 		false,        // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        message,
+			ContentType: "text/plain", // Content type of the message.
+			Body:        message,      // Message body.
 		},
 	)
 	if err != nil {
@@ -98,6 +122,12 @@ func (r *rabbitmq) PublishMessage(queueName, exchangeName string, message []byte
 	return nil
 }
 
+// ConsumeMessages starts consuming messages from a queue and invokes the provided handler function for each message.
+// Parameters:
+// - queueName: Name of the queue to consume from.
+// - handler: A function to process the message body.
+// Returns:
+// - error: Error, if any, during message consumption setup.
 func (r *rabbitmq) ConsumeMessages(queueName string, handler func([]byte)) error {
 	msgs, err := r.channel.Consume(
 		queueName, // queue
@@ -112,22 +142,30 @@ func (r *rabbitmq) ConsumeMessages(queueName string, handler func([]byte)) error
 		return err
 	}
 
+	// Start a goroutine to handle incoming messages.
 	go func() {
 		for msg := range msgs {
 			log.Printf("Received message: %s", msg.Body)
-			handler(msg.Body)
+			handler(msg.Body) // Call the handler function for each message.
 		}
 	}()
 
 	return nil
 }
 
+// Close closes the RabbitMQ channel and connection.
+// Returns:
+// - error: Error, if any, during closure of the channel or connection.
 func (r *rabbitmq) Close() error {
+	// Close the channel.
 	if err := r.channel.Close(); err != nil {
 		return err
 	}
+
+	// Close the connection.
 	if err := r.conn.Close(); err != nil {
 		return err
 	}
+
 	return nil
 }
