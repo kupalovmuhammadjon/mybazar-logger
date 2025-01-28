@@ -80,26 +80,21 @@ type LogRequest struct {
 
 // NewLogger initializes and returns a new Logger instance.
 // Parameters:
-// - rabbitMQUrl: RabbitMQ connection string.
+// - rabbitMQ: RabbitMQ interface.
 // - queueName: Name of the RabbitMQ queue where logs will be sent.
 // - functionName: Name of the function generating logs.
 // - apiEndpoint: API endpoint associated with the logs.
-func NewLogger(rabbitMQUrl, queueName string, functionName string, apiEndpoint string) (Logger, error) {
-	rmq, err := rabbitmq.NewRabbitMQ(rabbitMQUrl)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize RabbitMQ: %s", err)
-	}
+func NewLogger(rabbitMQ rabbitmq.RabbitMQ, queueName string, funtionName string, apiEndpoint string) (Logger, error) {
 
-	// Declare the queue in RabbitMQ.
-	err = rmq.DeclareQueue(queueName, true, true, false, false, amqp.Table{})
+	err := rabbitMQ.DeclareQueue(queueName, true, true, false, false, amqp.Table{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to declare queue: %s", err)
 	}
 
 	return &logger{
-		rabbitmq:     rmq,
+		rabbitmq:     rabbitMQ,
 		queue:        queueName,
-		functionName: functionName,
+		functionName: funtionName,
 		apiEndpoint:  apiEndpoint,
 	}, nil
 }
