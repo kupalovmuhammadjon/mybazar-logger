@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	rabbitmq "github.com/kupalovmuhammadjon/mybazar/rabbitMQ"
+	rabbitmq "github.com/kupalovmuhammadjon/mybazar-logger/rabbitMQ"
 	"github.com/streadway/amqp"
 )
 

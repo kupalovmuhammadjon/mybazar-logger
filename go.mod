@@ -1,4 +1,4 @@
-module github.com/kupalovmuhammadjon/mybazar
+module github.com/kupalovmuhammadjon/mybazar-logger
 
 go 1.23.5
 
