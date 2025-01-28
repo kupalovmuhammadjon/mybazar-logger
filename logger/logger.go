@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	rabbitmq "mybazar_logger/rabbitMQ"
+	rabbitmq "mybazar-logger/rabbitMQ"
 	"time"
 
 	"github.com/streadway/amqp"

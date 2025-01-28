@@ -1,4 +1,4 @@
-module mybazar_logger
+module mybazar-logger
 
 go 1.23.5
 
