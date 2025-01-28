@@ -6,8 +6,10 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// RabbitMQ is an interface for interacting with RabbitMQ.
-// It provides methods to publish messages, consume messages, declare queues, and manage connections.
+/*
+RabbitMQ is an interface for interacting with RabbitMQ.
+It provides methods to publish messages, consume messages, declare queues, and manage connections.
+*/
 type RabbitMQ interface {
 	// PublishMessage publishes a message to a queue or an exchange.
 	PublishMessage(queueName, exchangeName string, message []byte) error
