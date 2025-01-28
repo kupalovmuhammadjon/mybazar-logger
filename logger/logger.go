@@ -7,7 +7,7 @@ import (
 	"time"
 
 	rabbitmq "github.com/kupalovmuhammadjon/rabbitmq-go"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // Logger is the main interface for logging operations.
@@ -26,9 +26,9 @@ type Logger interface {
 	Critical(log LogRequest) error
 
 	/*
-	CloseRabbitMQConnection closes the connection to RabbitMQ.
-	When you initialize logger service it initializes the connection so it should be closed
-	*/ 
+		CloseRabbitMQConnection closes the connection to RabbitMQ.
+		When you initialize logger service it initializes the connection so it should be closed
+	*/
 	CloseRabbitMQConnection() error
 }
 
