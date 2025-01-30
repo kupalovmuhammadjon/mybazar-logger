@@ -147,7 +147,6 @@ func (l *logger) publish(log logRequest) error {
 		return fmt.Errorf("failed to publish log message: %s", err)
 	}
 
-	fmt.Printf("[%s] Log sent: %s\n", log.ErrorLevel, string(message))
 	return nil
 }
 
