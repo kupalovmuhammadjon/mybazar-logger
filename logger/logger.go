@@ -53,6 +53,7 @@ type logRequest struct {
 	DetailsUz       string    `json:"details_uz,omitempty"` // Optional details in Uzbek.
 	DetailsRu       string    `json:"details_ru,omitempty"` // Optional details in Russian.
 	ApiEndpoint     string    `json:"api_endpoint"`
+	Method          string    `json:"method"`
 	FunctionName    string    `json:"function_name"`
 	StatusCode      int       `json:"status_code"`
 	RequestPayload  string    `json:"request_payload"`
@@ -71,6 +72,7 @@ type LogRequest struct {
 	DetailsUz       string `json:"details_uz,omitempty"` // Optional details in Uzbek.
 	DetailsRu       string `json:"details_ru,omitempty"` // Optional details in Russian.
 	ApiEndpoint     string `json:"api_endpoint"`
+	Method          string `json:"method"`
 	StatusCode      int    `json:"status_code"`
 	RequestPayload  string `json:"request_payload"`
 	EventType       string `json:"event_type"`                 // Event type, usually based on the function name.
@@ -174,6 +176,7 @@ func (l *logger) populateLogRequest(log LogRequest, errorLevel string) logReques
 		DetailsUz:       log.DetailsUz,
 		DetailsRu:       log.DetailsRu,
 		ApiEndpoint:     log.ApiEndpoint,
+		Method:          log.Method,
 		FunctionName:    l.functionName,
 		StatusCode:      log.StatusCode,
 		RequestPayload:  log.RequestPayload,

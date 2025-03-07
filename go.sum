@@ -1,5 +1,5 @@
-github.com/kupalovmuhammadjon/rabbitmq-go v1.0.2 h1:pPReVILe1oQpBiWrAXDWWJrxWH5TkDgAKE0ax0wWqGU=
-github.com/kupalovmuhammadjon/rabbitmq-go v1.0.2/go.mod h1:pflgRM+VUe6mSWrkh8UJHlXGhCtdCO5jqPVT2INJrw8=
+github.com/kupalovmuhammadjon/rabbitmq-go v1.0.5 h1:yn7NkbKtmL8fsXGpskeXRUTdZclYWSDY3R7cc1FScvM=
+github.com/kupalovmuhammadjon/rabbitmq-go v1.0.5/go.mod h1:pflgRM+VUe6mSWrkh8UJHlXGhCtdCO5jqPVT2INJrw8=
 github.com/rabbitmq/amqp091-go v1.10.0 h1:STpn5XsHlHGcecLmMFCtg7mqq0RnD+zFr4uzukfVhBw=
 github.com/rabbitmq/amqp091-go v1.10.0/go.mod h1:Hy4jKW5kQART1u+JkDTF9YYOQUHXqMuhrgxOEeS7G4o=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
