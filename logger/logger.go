@@ -65,19 +65,19 @@ type logRequest struct {
 // LogRequest is a simplified structure used by the user to send log data.
 // It will be converted into a `logRequest` structure with additional metadata.
 type LogRequest struct {
-	ErrorCode       int    `json:"error_code"`
-	ClientMessageUz string `json:"client_message_uz"`
-	ClientMessageRu string `json:"client_message_ru"`
-	ErrorMessage    string `json:"error_message"`
-	DetailsUz       string `json:"details_uz,omitempty"` // Optional details in Uzbek.
-	DetailsRu       string `json:"details_ru,omitempty"` // Optional details in Russian.
-	ApiEndpoint     string `json:"api_endpoint"`
-	Method          string `json:"method"`
-	StatusCode      int    `json:"status_code"`
-	RequestPayload  string `json:"request_payload"`
-	EventType       string `json:"event_type"`                 // Event type, usually based on the function name.
-	ResponseData    string `json:"response_data,omitempty"`    // Optional response data.
-	MerchantApiKey  string `json:"merchant_api_key,omitempty"` // Merchant API key, required if sending to merchants.
+	ErrorCode       errorcode `json:"error_code"`
+	ClientMessageUz string    `json:"client_message_uz"`
+	ClientMessageRu string    `json:"client_message_ru"`
+	ErrorMessage    string    `json:"error_message"`
+	DetailsUz       string    `json:"details_uz,omitempty"` // Optional details in Uzbek.
+	DetailsRu       string    `json:"details_ru,omitempty"` // Optional details in Russian.
+	ApiEndpoint     string    `json:"api_endpoint"`
+	Method          string    `json:"method"`
+	StatusCode      int       `json:"status_code"`
+	RequestPayload  string    `json:"request_payload"`
+	EventType       string    `json:"event_type"`                 // Event type, usually based on the function name.
+	ResponseData    string    `json:"response_data,omitempty"`    // Optional response data.
+	MerchantApiKey  string    `json:"merchant_api_key,omitempty"` // Merchant API key, required if sending to merchants.
 }
 
 // NewLogger initializes and returns a new Logger instance.
@@ -169,7 +169,7 @@ func (l *logger) populateLogRequest(log LogRequest, errorLevel string) logReques
 	logRequest := logRequest{
 		Timestamp:       time.Now(),
 		ErrorLevel:      errorLevel,
-		ErrorCode:       log.ErrorCode,
+		ErrorCode:       int(log.ErrorCode),
 		ClientMessageUz: log.ClientMessageUz,
 		ClientMessageRu: log.ClientMessageRu,
 		ErrorMessage:    log.ErrorMessage,
