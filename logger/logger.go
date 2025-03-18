@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -70,7 +71,7 @@ type LogRequest struct {
 	ApiEndpoint     string    `json:"api_endpoint"`
 	Method          string    `json:"method"`
 	StatusCode      int       `json:"status_code"`
-	RequestPayload  string    `json:"request_payload"`
+	RequestPayload  any       `json:"request_payload"`
 	EventType       string    `json:"event_type"`                 // Event type, usually based on the function name.
 	ResponseData    string    `json:"response_data,omitempty"`    // Optional response data.
 	MerchantApiKey  string    `json:"merchant_api_key,omitempty"` // Merchant API key, required if sending to merchants.
@@ -110,7 +111,10 @@ func NewLogger(rabbitMQ rabbitmq.RabbitMQ, queueName, funtionName, apiEndpoint s
 
 // Info logs an informational message.
 func (l *logger) Info(log LogRequest) error {
-	fullLog := l.populateLogRequest(log, "info")
+	fullLog, err := l.populateLogRequest(log, "info")
+	if err != nil {
+		return err
+	}
 
 	if err := validateLogRequest(fullLog); err != nil {
 		return err
@@ -121,7 +125,10 @@ func (l *logger) Info(log LogRequest) error {
 
 // Warn logs a warning message.
 func (l *logger) Warn(log LogRequest) error {
-	fullLog := l.populateLogRequest(log, "warning")
+	fullLog, err := l.populateLogRequest(log, "info")
+	if err != nil {
+		return err
+	}
 
 	if err := validateLogRequest(fullLog); err != nil {
 		return err
@@ -132,7 +139,10 @@ func (l *logger) Warn(log LogRequest) error {
 
 // Error logs an error message.
 func (l *logger) Error(log LogRequest) error {
-	fullLog := l.populateLogRequest(log, "error")
+	fullLog, err := l.populateLogRequest(log, "info")
+	if err != nil {
+		return err
+	}
 
 	if err := validateLogRequest(fullLog); err != nil {
 		return err
@@ -143,7 +153,10 @@ func (l *logger) Error(log LogRequest) error {
 
 // Critical logs a critical error message.
 func (l *logger) Critical(log LogRequest) error {
-	fullLog := l.populateLogRequest(log, "critical")
+	fullLog, err := l.populateLogRequest(log, "info")
+	if err != nil {
+		return err
+	}
 
 	if err := validateLogRequest(fullLog); err != nil {
 		return err
@@ -174,7 +187,25 @@ func validateLogRequest(log logRequest) error {
 }
 
 // populateLogRequest populates a `logRequest` with additional metadata like timestamp, error level, and function name.
-func (l *logger) populateLogRequest(log LogRequest, errorLevel string) logRequest {
+func (l *logger) populateLogRequest(log LogRequest, errorLevel string) (logRequest, error) {
+
+	var (
+		body []byte
+		err  error
+	)
+
+	switch msg := log.RequestPayload.(type) {
+	case []byte:
+		body = msg
+	case string:
+		body = []byte(msg)
+	default:
+		body, err = json.Marshal(msg)
+		if err != nil {
+			return logRequest{}, err
+		}
+	}
+
 	logRequest := logRequest{
 		Timestamp:       time.Now(),
 		ErrorLevel:      errorLevel,
@@ -188,7 +219,7 @@ func (l *logger) populateLogRequest(log LogRequest, errorLevel string) logReques
 		Method:          log.Method,
 		FunctionName:    l.functionName,
 		StatusCode:      log.StatusCode,
-		RequestPayload:  log.RequestPayload,
+		RequestPayload:  string(body),
 		EventType:       log.EventType,
 		ResponseData:    log.ResponseData,
 		MerchantApiKey:  log.MerchantApiKey,
@@ -201,5 +232,5 @@ func (l *logger) populateLogRequest(log LogRequest, errorLevel string) logReques
 		logRequest.StatusCode = 200
 	}
 
-	return logRequest
+	return logRequest, nil
 }
