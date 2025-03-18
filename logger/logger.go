@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -25,11 +24,7 @@ type Logger interface {
 	// Critical logs critical errors.
 	Critical(log LogRequest) error
 
-	/*
-		CloseRabbitMQConnection closes the connection to RabbitMQ.
-		When you initialize logger service it initializes the connection so it should be closed
-	*/
-	CloseRabbitMQConnection() error
+	OrderNotification(order Order) error
 }
 
 // logger is the implementation of the Logger interface.
@@ -37,6 +32,7 @@ type Logger interface {
 type logger struct {
 	rabbitmq     rabbitmq.RabbitMQ // RabbitMQ client for managing messages.
 	queue        string            // Name of the RabbitMQ queue where logs will be sent.
+	orderQueue   string            // Name of the RabbitMQ queue where logs will be sent.
 	functionName string            // Name of the function generating logs.
 	apiEndpoint  string            // API endpoint associated with the logs.
 }
@@ -80,22 +76,33 @@ type LogRequest struct {
 	MerchantApiKey  string    `json:"merchant_api_key,omitempty"` // Merchant API key, required if sending to merchants.
 }
 
+type Order struct {
+	OrderText  string `json:"order_text"`
+	MerchantId string `json:"merchant_id"`
+}
+
 // NewLogger initializes and returns a new Logger instance.
 // Parameters:
 // - rabbitMQ: RabbitMQ interface.
 // - queueName: Name of the RabbitMQ queue where logs will be sent.
 // - functionName: Name of the function generating logs.
 // - apiEndpoint: API endpoint associated with the logs.
-func NewLogger(rabbitMQ rabbitmq.RabbitMQ, queueName string, funtionName string, apiEndpoint string) (Logger, error) {
+func NewLogger(rabbitMQ rabbitmq.RabbitMQ, queueName, funtionName, apiEndpoint string, orderQueue *string) (Logger, error) {
 
 	err := rabbitMQ.DeclareQueue(queueName, true, true, false, false, amqp.Table{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to declare queue: %s", err)
 	}
 
+	var oQueue string
+	if orderQueue != nil {
+		oQueue = *orderQueue
+	}
+
 	return &logger{
 		rabbitmq:     rabbitMQ,
 		queue:        queueName,
+		orderQueue:   oQueue,
 		functionName: funtionName,
 		apiEndpoint:  apiEndpoint,
 	}, nil
@@ -104,52 +111,49 @@ func NewLogger(rabbitMQ rabbitmq.RabbitMQ, queueName string, funtionName string,
 // Info logs an informational message.
 func (l *logger) Info(log LogRequest) error {
 	fullLog := l.populateLogRequest(log, "info")
-	return l.publish(fullLog)
+
+	if err := validateLogRequest(fullLog); err != nil {
+		return err
+	}
+
+	return l.rabbitmq.PublishMessage(l.queue, "", fullLog)
 }
 
 // Warn logs a warning message.
 func (l *logger) Warn(log LogRequest) error {
 	fullLog := l.populateLogRequest(log, "warning")
-	return l.publish(fullLog)
+
+	if err := validateLogRequest(fullLog); err != nil {
+		return err
+	}
+
+	return l.rabbitmq.PublishMessage(l.queue, "", fullLog)
 }
 
 // Error logs an error message.
 func (l *logger) Error(log LogRequest) error {
 	fullLog := l.populateLogRequest(log, "error")
-	return l.publish(fullLog)
+
+	if err := validateLogRequest(fullLog); err != nil {
+		return err
+	}
+
+	return l.rabbitmq.PublishMessage(l.queue, "", fullLog)
 }
 
 // Critical logs a critical error message.
 func (l *logger) Critical(log LogRequest) error {
 	fullLog := l.populateLogRequest(log, "critical")
-	return l.publish(fullLog)
-}
 
-// CloseRabbitMQConnection closes the RabbitMQ connection.
-func (l *logger) CloseRabbitMQConnection() error {
-	return l.rabbitmq.Close()
-}
-
-// publish validates the log request, serializes it, and sends it to RabbitMQ.
-func (l *logger) publish(log logRequest) error {
-	// Validate the log request.
-	if err := validateLogRequest(log); err != nil {
+	if err := validateLogRequest(fullLog); err != nil {
 		return err
 	}
 
-	// Serialize the log request into JSON format.
-	message, err := json.Marshal(log)
-	if err != nil {
-		return fmt.Errorf("failed to serialize log request: %s", err)
-	}
+	return l.rabbitmq.PublishMessage(l.queue, "", fullLog)
+}
 
-	// Publish the log message to RabbitMQ.
-	err = l.rabbitmq.PublishMessage(l.queue, "", message)
-	if err != nil {
-		return fmt.Errorf("failed to publish log message: %s", err)
-	}
-
-	return nil
+func (l *logger) OrderNotification(order Order) error {
+	return l.rabbitmq.PublishMessage(l.queue, "", order)
 }
 
 // validateLogRequest ensures that required fields in the log request are present.
@@ -157,8 +161,13 @@ func validateLogRequest(log logRequest) error {
 	if log.ErrorCode == 0 {
 		return errors.New("error_code is required")
 	}
+
 	if log.ClientMessageUz == "" && log.ClientMessageRu == "" {
 		return errors.New("at least one client message (Uz or Ru) is required")
+	}
+
+	if log.ErrorLevel == "" || ((log.ErrorLevel == "error" || log.ErrorLevel == "critical") && log.RequestPayload == "") {
+		return errors.New("request payload is required for this error level")
 	}
 
 	return nil
