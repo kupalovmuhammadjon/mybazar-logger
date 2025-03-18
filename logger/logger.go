@@ -43,7 +43,7 @@ type logger struct {
 type logRequest struct {
 	Timestamp       time.Time `json:"timestamp"`
 	ErrorLevel      string    `json:"error_level"`
-	ErrorCode       int       `json:"error_code"`
+	Errorcode       int       `json:"error_code"`
 	ClientMessageUz string    `json:"client_message_uz"`
 	ClientMessageRu string    `json:"client_message_ru"`
 	ErrorMessage    string    `json:"error_message"`
@@ -62,7 +62,7 @@ type logRequest struct {
 // LogRequest is a simplified structure used by the user to send log data.
 // It will be converted into a `logRequest` structure with additional metadata.
 type LogRequest struct {
-	ErrorCode       errorcode `json:"error_code"`
+	Errorcode       Errorcode `json:"error_code"`
 	ClientMessageUz string    `json:"client_message_uz"`
 	ClientMessageRu string    `json:"client_message_ru"`
 	ErrorMessage    string    `json:"error_message"`
@@ -171,7 +171,7 @@ func (l *logger) OrderNotification(order Order) error {
 
 // validateLogRequest ensures that required fields in the log request are present.
 func validateLogRequest(log logRequest) error {
-	if log.ErrorCode == 0 {
+	if log.Errorcode == 0 {
 		return errors.New("error_code is required")
 	}
 
@@ -209,7 +209,7 @@ func (l *logger) populateLogRequest(log LogRequest, errorLevel string) (logReque
 	logRequest := logRequest{
 		Timestamp:       time.Now(),
 		ErrorLevel:      errorLevel,
-		ErrorCode:       int(log.ErrorCode),
+		Errorcode:       int(log.Errorcode),
 		ClientMessageUz: log.ClientMessageUz,
 		ClientMessageRu: log.ClientMessageRu,
 		ErrorMessage:    log.ErrorMessage,
