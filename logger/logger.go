@@ -166,7 +166,7 @@ func (l *logger) Critical(log LogRequest) error {
 }
 
 func (l *logger) OrderNotification(order Order) error {
-	return l.rabbitmq.PublishMessage(l.queue, "", order)
+	return l.rabbitmq.PublishMessage(l.orderQueue, "", order)
 }
 
 // validateLogRequest ensures that required fields in the log request are present.
