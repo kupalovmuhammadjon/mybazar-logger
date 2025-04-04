@@ -79,7 +79,7 @@ func (l *logger) Info(log LogRequest) error {
 
 // Warn logs a warning message.
 func (l *logger) Warn(log LogRequest) error {
-	fullLog, err := l.populateLogRequest(log, "info")
+	fullLog, err := l.populateLogRequest(log, "warning")
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (l *logger) Warn(log LogRequest) error {
 
 // Error logs an error message.
 func (l *logger) Error(log LogRequest) error {
-	fullLog, err := l.populateLogRequest(log, "info")
+	fullLog, err := l.populateLogRequest(log, "error")
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (l *logger) Error(log LogRequest) error {
 
 // Critical logs a critical error message.
 func (l *logger) Critical(log LogRequest) error {
-	fullLog, err := l.populateLogRequest(log, "info")
+	fullLog, err := l.populateLogRequest(log, "critical")
 	if err != nil {
 		return err
 	}
